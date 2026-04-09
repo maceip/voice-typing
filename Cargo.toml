@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "rust-asr",
+    "rust-core",
+    "rust-audio",
+    "rust-ext",
+    "rust-platform-windows",
+    "rust-ui",
+]
+resolver = "2"

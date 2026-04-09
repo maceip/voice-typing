@@ -1,0 +1,183 @@
+# Power-user dictionary for Claude Code / Codex workflows
+# Format:
+# spoken phrase => desired output
+
+# Core products / agents
+clawd => Claude
+clawd code => Claude Code
+clawed code => Claude Code
+cloud code => Claude Code
+codex => Codex
+co dex => Codex
+z k => ZK
+zee kay => ZK
+double u double u double u => WWW
+w w w => WWW
+dash => -
+dot => .
+open ai codex => OpenAI Codex
+chat gpt => ChatGPT
+open ai => OpenAI
+anthropic => Anthropic
+
+# Models
+g p t => GPT
+g p t four point one => GPT-4.1
+g p t five => GPT-5
+g p t five point four => GPT-5.4
+o three => o3
+o four mini => o4-mini
+clawed sonnet => Claude Sonnet
+claude sonnet => Claude Sonnet
+claude opus => Claude Opus
+
+# Common coding workflow terms
+pull request => PR
+p r => PR
+merge request => MR
+repo => repo
+repository => repository
+monorepo => monorepo
+work tree => worktree
+workspace => workspace
+branch => branch
+commit sha => commit SHA
+sha => SHA
+diff => diff
+patch => patch
+rebase => rebase
+fast forward => fast-forward
+head ref => HEAD ref
+
+# CLI / tools
+git hub => GitHub
+git lab => GitLab
+git => Git
+gh => gh
+rip grep => ripgrep
+r g => rg
+power shell => PowerShell
+terminal => terminal
+shell script => shell script
+bash => Bash
+z shell => zsh
+tmux => tmux
+docker => Docker
+docker compose => Docker Compose
+kubectl => kubectl
+kube cuddle => kubectl
+helm => Helm
+
+# Rust
+cargo => cargo
+cargo check => cargo check
+cargo clippy => cargo clippy
+cargo fmt => cargo fmt
+rustup => rustup
+rust analyzer => rust-analyzer
+crates io => crates.io
+tokio => Tokio
+serde => Serde
+anyhow => anyhow
+this error => thiserror
+cpal => CPAL
+iced => iced
+winit => winit
+
+# AI / retrieval / evals
+llm => LLM
+rag => RAG
+embedding => embedding
+embeddings => embeddings
+tokenizer => tokenizer
+prompt cache => prompt cache
+function calling => function calling
+tool calling => tool calling
+evals => evals
+latency => latency
+throughput => throughput
+
+# ASR / audio
+speech to text => speech-to-text
+s t t => STT
+text to speech => text-to-speech
+t t s => TTS
+a s r => ASR
+moon shine => Moonshine
+moonshine => Moonshine
+sherpa onnx => Sherpa-ONNX
+silero => Silero
+voice activity detector => VAD
+v a d => VAD
+onnx => ONNX
+
+# Infra / cloud
+k three s => K3s
+kubernetes => Kubernetes
+k eights => Kubernetes
+aws => AWS
+iam => IAM
+s three => S3
+e c two => EC2
+route fifty three => Route 53
+cloud front => CloudFront
+v p c => VPC
+terraform => Terraform
+prometheus => Prometheus
+grafana => Grafana
+
+# Databases / backend
+postgres => PostgreSQL
+postgre sql => PostgreSQL
+redis => Redis
+mongo => MongoDB
+mongo d b => MongoDB
+qdrant => Qdrant
+cue drant => Qdrant
+postgres vector => pgvector
+pee gee vector => pgvector
+
+# Languages / frameworks
+typescript => TypeScript
+type script => TypeScript
+javascript => JavaScript
+java script => JavaScript
+node => Node.js
+node j s => Node.js
+react => React
+next js => Next.js
+next j s => Next.js
+python => Python
+fast api => FastAPI
+django => Django
+flask => Flask
+kotlin => Kotlin
+jetpack compose => Jetpack Compose
+
+# Editor / IDE
+vs code => VS Code
+v s code => VS Code
+cursor => Cursor
+zed => Zed
+intellij => IntelliJ
+android studio => Android Studio
+
+# Codex / Claude Code style commands
+apply patch => apply_patch
+spawn agent => spawn_agent
+sub agent => sub-agent
+commentary channel => commentary
+final channel => final
+tool use => tool use
+multi tool use => multi_tool_use
+m c p => MCP
+model context protocol => MCP
+
+# Frequent repo terms
+read me => README
+cargo toml => Cargo.toml
+agents dot m d => AGENTS.md
+skill dot m d => SKILL.md
+git ignore => .gitignore
+package json => package.json
+ts config => tsconfig

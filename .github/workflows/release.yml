@@ -1,0 +1,79 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: voice-typing-linux-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: voice-typing-macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: voice-typing-windows-x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: install linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libxkbcommon-dev libwayland-dev libvulkan-dev
+
+      - name: build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: package (unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/daydream dist/voice-typing
+          tar -czf ${{ matrix.artifact }}.tar.gz -C dist voice-typing
+
+      - name: package (windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/daydream.exe dist/voice-typing.exe
+          7z a ${{ matrix.artifact }}.zip ./dist/voice-typing.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            voice-typing-linux-x86_64.tar.gz
+            voice-typing-macos-arm64.tar.gz
+            voice-typing-windows-x86_64.zip

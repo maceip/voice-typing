@@ -1,0 +1,8 @@
+[package]
+name = "daydream-audio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0"
+daydream-core = { path = "../rust-core" }
