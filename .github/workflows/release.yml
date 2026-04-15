@@ -45,7 +45,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/daydream dist/voice-typing
+          cp target/${{ matrix.target }}/release/voice-typing dist/voice-typing
           tar -czf ${{ matrix.artifact }}.tar.gz -C dist voice-typing
 
       - name: package (windows)
@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/daydream.exe dist/voice-typing.exe
+          cp target/${{ matrix.target }}/release/voice-typing.exe dist/voice-typing.exe
           7z a ${{ matrix.artifact }}.zip ./dist/voice-typing.exe
 
       - uses: actions/upload-artifact@v4

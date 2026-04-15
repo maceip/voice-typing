@@ -1,6 +1,6 @@
-// Daydream Voice — content script
+// voice-typing — content script
 // Overlays a state-aware icon on focused text inputs, reflecting the live
-// state of the Daydream ASR service running on the local machine.
+// state of the local ASR service running on the local machine.
 
 (() => {
   "use strict";
@@ -142,7 +142,7 @@
     ensureDefs();
 
     overlay = document.createElement("div");
-    overlay.className = "daydream-overlay";
+    overlay.className = "voice-typing-overlay";
     renderOverlay();
 
     overlay.addEventListener("mousedown", onMicClick);
@@ -169,12 +169,12 @@
     if (!overlay) return;
     overlay.setAttribute("data-state", state);
     overlay.innerHTML =
-      '<div class="daydream-arcs">' +
-      '<div class="daydream-arc daydream-arc-1"></div>' +
-      '<div class="daydream-arc daydream-arc-2"></div>' +
-      '<div class="daydream-arc daydream-arc-3"></div>' +
+      '<div class="voice-typing-arcs">' +
+      '<div class="voice-typing-arc voice-typing-arc-1"></div>' +
+      '<div class="voice-typing-arc voice-typing-arc-2"></div>' +
+      '<div class="voice-typing-arc voice-typing-arc-3"></div>' +
       "</div>" +
-      '<div class="daydream-icon">' +
+      '<div class="voice-typing-icon">' +
       iconForState(state) +
       "</div>";
   }

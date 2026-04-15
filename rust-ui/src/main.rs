@@ -37,7 +37,7 @@ fn write_extensions() {
         .and_then(|p| p.parent().map(|d| d.join("extensions")))
         .unwrap_or_else(|| std::path::PathBuf::from("extensions"));
 
-    if let Err(e) = daydream_ext::write(&dir) {
+    if let Err(e) = voice_typing_ext::write(&dir) {
         eprintln!("[ext] write failed: {e}");
     } else {
         eprintln!("[ext] {}", dir.display());

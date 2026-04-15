@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Daydream Voice",
+  "name": "voice-typing",
   "version": "0.1.0",
-  "description": "Voice-to-text overlay for any text input, powered by Daydream ASR",
+  "description": "Voice-to-text overlay for any text input, powered by local Moonshine ASR",
   "permissions": [],
   "background": {
     "service_worker": "background.js"

@@ -1,6 +1,6 @@
 # Rust ASR
 
-This crate is the Rust ASR library for Daydream.
+This crate is the Rust ASR library for voice-typing.
 
 ## What Exists
 
@@ -12,12 +12,12 @@ This crate is the Rust ASR library for Daydream.
 
 ## Commands
 
-The runtime entrypoint lives in the single `daydream` binary:
+The runtime entrypoint lives in the single desktop binary in this workspace:
 
 ```powershell
-cargo run -p daydream
-cargo run -p daydream -- --nogui
-cargo run -p daydream -- --nogui wav [path-to-wav]
+cargo run
+cargo run -- --nogui
+cargo run -- --nogui wav [path-to-wav]
 ```
 
 The standalone extracted repo owns its own model assets under `assets/models`.

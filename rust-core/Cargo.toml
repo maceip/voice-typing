@@ -1,5 +1,5 @@
 [package]
-name = "daydream-core"
+name = "voice-typing-core"
 version = "0.1.0"
 edition = "2024"
 

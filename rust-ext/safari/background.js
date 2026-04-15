@@ -1,5 +1,5 @@
-// Daydream Voice — background service worker (Safari)
-// Maintains a WebSocket connection to the local Daydream app and relays state
+// voice-typing — background service worker (Safari)
+// Maintains a WebSocket connection to the local voice-typing app and relays state
 // to content scripts running in every tab.
 
 const api = typeof browser !== "undefined" ? browser : chrome;

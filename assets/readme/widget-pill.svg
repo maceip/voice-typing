@@ -1,0 +1,21 @@
+<svg width="284" height="89" viewBox="0 0 284 89" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="0" y="0" width="284" height="89" filterUnits="userSpaceOnUse">
+      <feOffset dy="6"/>
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.22 0"/>
+      <feBlend in="SourceGraphic" mode="normal"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="24" y="16" width="236" height="49" rx="14" fill="#1E1E1F" stroke="#2A2A2C"/>
+    <rect x="44" y="28" width="6" height="24" rx="3" fill="#D6D6D8"/>
+    <path d="M96.5 29.5C96.5 26.4624 98.9624 24 102 24C105.038 24 107.5 26.4624 107.5 29.5V39.5C107.5 42.5376 105.038 45 102 45C98.9624 45 96.5 42.5376 96.5 39.5V29.5Z" fill="#F4F4F5"/>
+    <path d="M93.5 38.5C93.5 43.1944 97.3056 47 102 47C106.694 47 110.5 43.1944 110.5 38.5" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
+    <path d="M102 48.5V54" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
+    <path d="M97.5 54H106.5" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="217" cy="40.5" r="2.5" fill="#C9C9CC"/>
+    <circle cx="228" cy="40.5" r="2.5" fill="#C9C9CC"/>
+    <circle cx="239" cy="40.5" r="2.5" fill="#C9C9CC"/>
+  </g>
+</svg>

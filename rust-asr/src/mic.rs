@@ -14,9 +14,14 @@ pub struct MicStartInfo {
     pub downmixing: bool,
 }
 
-pub fn start_microphone<F>(target_sample_rate: u32, on_chunk: F) -> Result<(Stream, MicStartInfo)>
+pub fn start_microphone<F, E>(
+    target_sample_rate: u32,
+    on_chunk: F,
+    on_error: E,
+) -> Result<(Stream, MicStartInfo)>
 where
     F: FnMut(Vec<f32>) + Send + 'static,
+    E: FnMut(String) + Send + 'static,
 {
     let host = cpal::default_host();
     let device = host
@@ -34,7 +39,12 @@ where
     let channels = stream_config.channels;
 
     let callback = AudioChunker::new(input_rate, channels, target_sample_rate, on_chunk);
-    let err_fn = |err| eprintln!("[ASR] microphone stream error: {err}");
+    let mut err_callback = on_error;
+    let err_fn = move |err| {
+        let message = format!("[ASR] microphone stream error: {err}");
+        eprintln!("{message}");
+        err_callback(message);
+    };
 
     let stream = match sample_format {
         SampleFormat::I8 => build_stream::<i8>(&device, &stream_config, callback, err_fn)?,
@@ -145,7 +155,7 @@ struct AudioChunker {
 }
 
 impl AudioChunker {
-    const CHUNK_SIZE: usize = 512;
+    const CHUNK_SIZE: usize = 256;
 
     fn new<F>(
         input_sample_rate: u32,

@@ -29,11 +29,7 @@ impl CurrentWiredModel {
             anyhow::bail!("VAD model not found: {}", vad_model.display());
         }
 
-        for required in [
-            "encoder_model.ort",
-            "decoder_model_merged.ort",
-            "tokens.txt",
-        ] {
+        for required in ["encoder_model.ort", "decoder_model_merged.ort", "tokens.txt"] {
             let path = model_dir.join(required);
             path.metadata()
                 .with_context(|| format!("missing current wired model file: {}", path.display()))?;

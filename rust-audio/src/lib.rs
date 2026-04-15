@@ -1,5 +1,5 @@
 use anyhow::Context;
-use daydream_core::TtsService;
+use voice_typing_core::TtsService;
 use std::process::Command;
 
 pub struct DesktopTtsService;

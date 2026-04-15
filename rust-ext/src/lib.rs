@@ -1,10 +1,10 @@
-//! Embeds Daydream browser extensions and writes them to disk.
+//! Embeds voice-typing browser extensions and writes them to disk.
 //!
 //! `cargo build` with the `extensions` feature produces:
 //!   - `extensions/chrome/`   unpacked directory (load in chrome://extensions)
 //!   - `extensions/safari/`   unpacked directory (convert with xcrun)
-//!   - `extensions/daydream-chrome.zip`
-//!   - `extensions/daydream-safari.zip`
+//!   - `extensions/voice-typing-chrome.zip`
+//!   - `extensions/voice-typing-safari.zip`
 
 use std::io;
 use std::path::Path;
@@ -69,8 +69,8 @@ pub fn write(dir: &Path) -> io::Result<()> {
     std::fs::write(safari_icons.join("icon128.png"), safari::ICON_128)?;
 
     // ── Zip archives ────────────────────────────────────────────────
-    std::fs::write(dir.join("daydream-chrome.zip"), CHROME_ZIP)?;
-    std::fs::write(dir.join("daydream-safari.zip"), SAFARI_ZIP)?;
+    std::fs::write(dir.join("voice-typing-chrome.zip"), CHROME_ZIP)?;
+    std::fs::write(dir.join("voice-typing-safari.zip"), SAFARI_ZIP)?;
 
     Ok(())
 }

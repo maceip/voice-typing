@@ -1,9 +1,9 @@
 [package]
-name = "daydream-ext"
+name = "voice-typing-ext"
 version = "0.1.0"
 edition = "2024"
-description = "Browser extensions (Chrome, Safari) for the Daydream ASR overlay"
-links = "daydream_ext"
+description = "Browser extensions (Chrome, Safari) for the voice-typing overlay"
+links = "voice_typing_ext"
 
 [build-dependencies]
 zip = { version = "2", default-features = false, features = ["deflate"] }

@@ -3,14 +3,15 @@ use crate::model::{CurrentWiredModel, WiredModelPaths};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use cpal::Stream;
-use daydream_core::{AsrResult, AsrService};
+use voice_typing_core::{AsrResult, AsrService};
 use sherpa_onnx::{
     OfflineMoonshineModelConfig, OfflineRecognizer, OfflineRecognizerConfig, SileroVadModelConfig,
     VadModelConfig, VoiceActivityDetector,
 };
+use std::collections::VecDeque;
 use std::path::Path;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
@@ -19,9 +20,10 @@ pub struct DesktopSherpaAsrService {
     configured_paths: Option<WiredModelPaths>,
     results_tx: broadcast::Sender<AsrResult>,
     worker: Option<JoinHandle<()>>,
-    worker_tx: Option<std::sync::mpsc::Sender<WorkerCommand>>,
+    worker_tx: Option<Arc<WorkerQueue>>,
     mic_stream: Option<Stream>,
     stop_flag: Arc<AtomicBool>,
+    telemetry: Arc<SessionTelemetry>,
 }
 
 impl DesktopSherpaAsrService {
@@ -34,7 +36,12 @@ impl DesktopSherpaAsrService {
             worker_tx: None,
             mic_stream: None,
             stop_flag: Arc::new(AtomicBool::new(false)),
+            telemetry: Arc::new(SessionTelemetry::new()),
         }
+    }
+
+    pub fn session_health(&self) -> SessionHealth {
+        self.telemetry.snapshot(self.worker.is_some())
     }
 
     pub fn initialize_blocking(&mut self, model_path: &str) -> Result<()> {
@@ -183,21 +190,45 @@ impl AsrService for DesktopSherpaAsrService {
             .context("ASR service not initialized")?;
 
         self.stop_flag.store(false, Ordering::SeqCst);
+        self.telemetry.mark_session_start();
         let stop = Arc::clone(&self.stop_flag);
-        let (tx, rx) = std::sync::mpsc::channel::<WorkerCommand>();
+        let queue = Arc::new(WorkerQueue::default());
         let results_tx = self.results_tx.clone();
         let worker_paths = paths.clone();
+        let worker_queue = Arc::clone(&queue);
+        let telemetry = Arc::clone(&self.telemetry);
 
         let worker = thread::spawn(move || {
             let Ok(mut session) = StreamingSession::new(&worker_paths) else {
                 eprintln!("[ASR] failed to start streaming session");
+                telemetry.record_error("failed to start streaming session".to_owned());
                 return;
             };
 
-            while let Ok(command) = rx.recv() {
+            while let Some((command, overflowed)) = worker_queue.recv() {
+                if overflowed {
+                    eprintln!(
+                        "[ASR] audio queue overflowed; dropping stale audio to recover latency"
+                    );
+                    match StreamingSession::new(&worker_paths) {
+                        Ok(new_session) => session = new_session,
+                        Err(err) => {
+                            telemetry.record_error(format!(
+                                "failed to reset streaming session after overflow: {err}"
+                            ));
+                            eprintln!(
+                                "[ASR] failed to reset streaming session after overflow: {err}"
+                            );
+                            continue;
+                        }
+                    }
+                }
+
                 match command {
                     WorkerCommand::Audio(chunk) => {
+                        telemetry.mark_audio();
                         for result in session.push_audio(&chunk) {
+                            telemetry.mark_result();
                             let _ = results_tx.send(result);
                         }
                     }
@@ -206,20 +237,28 @@ impl AsrService for DesktopSherpaAsrService {
             }
 
             for result in session.finish() {
+                telemetry.mark_result();
                 let _ = results_tx.send(result);
             }
         });
 
         let stop_for_callback = Arc::clone(&stop);
-        let tx_for_callback = tx.clone();
-        let (stream, info) = start_microphone(paths.sample_rate, move |chunk| {
-            if !stop_for_callback.load(Ordering::SeqCst) {
-                let _ = tx_for_callback.send(WorkerCommand::Audio(chunk));
-            }
-        })?;
+        let queue_for_callback = Arc::clone(&queue);
+        let telemetry_for_audio = Arc::clone(&self.telemetry);
+        let telemetry_for_error = Arc::clone(&self.telemetry);
+        let (stream, info) = start_microphone(
+            paths.sample_rate,
+            move |chunk| {
+                if !stop_for_callback.load(Ordering::SeqCst) {
+                    telemetry_for_audio.mark_audio();
+                    queue_for_callback.push_audio(chunk);
+                }
+            },
+            move |message| telemetry_for_error.record_error(message),
+        )?;
         log_mic_start(&info);
 
-        self.worker_tx = Some(tx);
+        self.worker_tx = Some(queue);
         self.worker = Some(worker);
         self.mic_stream = Some(stream);
         Ok(())
@@ -227,10 +266,11 @@ impl AsrService for DesktopSherpaAsrService {
 
     fn stop_real_time_session(&mut self) -> Result<()> {
         self.stop_flag.store(true, Ordering::SeqCst);
+        self.telemetry.mark_stopped();
         self.mic_stream.take();
 
         if let Some(tx) = self.worker_tx.take() {
-            let _ = tx.send(WorkerCommand::Stop);
+            tx.push_stop();
         }
 
         if let Some(worker) = self.worker.take() {
@@ -248,6 +288,145 @@ impl AsrService for DesktopSherpaAsrService {
 enum WorkerCommand {
     Audio(Vec<f32>),
     Stop,
+}
+
+#[derive(Default)]
+struct WorkerQueue {
+    state: Mutex<WorkerQueueState>,
+    ready: Condvar,
+}
+
+#[derive(Default)]
+struct WorkerQueueState {
+    items: VecDeque<WorkerCommand>,
+    overflowed: bool,
+}
+
+impl WorkerQueue {
+    const MAX_CHUNKS: usize = 48;
+    const TRIM_TO_CHUNKS: usize = 24;
+
+    fn push_audio(&self, chunk: Vec<f32>) {
+        let mut state = match self.state.lock() {
+            Ok(state) => state,
+            Err(_) => return,
+        };
+
+        if state.items.len() >= Self::MAX_CHUNKS {
+            while state.items.len() > Self::TRIM_TO_CHUNKS {
+                state.items.pop_front();
+                state.overflowed = true;
+            }
+        }
+
+        state.items.push_back(WorkerCommand::Audio(chunk));
+        self.ready.notify_one();
+    }
+
+    fn push_stop(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.items.push_back(WorkerCommand::Stop);
+            self.ready.notify_one();
+        }
+    }
+
+    fn recv(&self) -> Option<(WorkerCommand, bool)> {
+        let mut state = self.state.lock().ok()?;
+
+        loop {
+            if let Some(command) = state.items.pop_front() {
+                let overflowed = std::mem::take(&mut state.overflowed);
+                return Some((command, overflowed));
+            }
+
+            state = self.ready.wait(state).ok()?;
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SessionHealth {
+    pub worker_running: bool,
+    pub last_audio_age: Option<Duration>,
+    pub last_result_age: Option<Duration>,
+    pub last_error: Option<String>,
+}
+
+struct SessionTelemetry {
+    last_audio_at: Mutex<Option<Instant>>,
+    last_result_at: Mutex<Option<Instant>>,
+    last_error: Mutex<Option<String>>,
+}
+
+impl SessionTelemetry {
+    fn new() -> Self {
+        Self {
+            last_audio_at: Mutex::new(None),
+            last_result_at: Mutex::new(None),
+            last_error: Mutex::new(None),
+        }
+    }
+
+    fn mark_session_start(&self) {
+        let now = Instant::now();
+        if let Ok(mut value) = self.last_audio_at.lock() {
+            *value = Some(now);
+        }
+        if let Ok(mut value) = self.last_result_at.lock() {
+            *value = Some(now);
+        }
+        if let Ok(mut value) = self.last_error.lock() {
+            *value = None;
+        }
+    }
+
+    fn mark_audio(&self) {
+        if let Ok(mut value) = self.last_audio_at.lock() {
+            *value = Some(Instant::now());
+        }
+    }
+
+    fn mark_result(&self) {
+        if let Ok(mut value) = self.last_result_at.lock() {
+            *value = Some(Instant::now());
+        }
+    }
+
+    fn record_error(&self, error: String) {
+        if let Ok(mut value) = self.last_error.lock() {
+            *value = Some(error);
+        }
+    }
+
+    fn mark_stopped(&self) {
+        if let Ok(mut value) = self.last_error.lock() {
+            *value = None;
+        }
+    }
+
+    fn snapshot(&self, worker_running: bool) -> SessionHealth {
+        let now = Instant::now();
+        let last_audio_age = self
+            .last_audio_at
+            .lock()
+            .ok()
+            .and_then(|value| *value)
+            .map(|value| now.saturating_duration_since(value));
+        let last_result_age = self
+            .last_result_at
+            .lock()
+            .ok()
+            .and_then(|value| *value)
+            .map(|value| now.saturating_duration_since(value));
+        let last_error = self.last_error.lock().ok().and_then(|value| value.clone());
+
+        SessionHealth {
+            worker_running,
+            last_audio_age,
+            last_result_age,
+            last_error,
+        }
+    }
 }
 
 struct StreamingSession {
@@ -337,7 +516,9 @@ impl StreamingSession {
 fn create_recognizer(paths: &WiredModelPaths) -> Result<OfflineRecognizer> {
     let mut config = OfflineRecognizerConfig::default();
     config.model_config.tokens = Some(paths.model_dir.join("tokens.txt").display().to_string());
-    config.model_config.num_threads = 4;
+    config.model_config.num_threads = std::thread::available_parallelism()
+        .map(|value| value.get().clamp(2, 6) as i32)
+        .unwrap_or(4);
     config.model_config.debug = false;
     config.model_config.moonshine = OfflineMoonshineModelConfig {
         encoder: Some(
@@ -365,10 +546,10 @@ fn create_vad(paths: &WiredModelPaths) -> Result<VoiceActivityDetector> {
     let config = VadModelConfig {
         silero_vad: SileroVadModelConfig {
             model: Some(paths.vad_model.display().to_string()),
-            threshold: 0.5,
-            min_silence_duration: 0.25,
-            min_speech_duration: 0.1,
-            max_speech_duration: 10.0,
+            threshold: 0.45,
+            min_silence_duration: 0.05,
+            min_speech_duration: 0.05,
+            max_speech_duration: 1.8,
             window_size: 512,
         },
         sample_rate: paths.sample_rate as i32,
@@ -414,13 +595,16 @@ fn enhance_for_asr(samples: &[f32]) -> Vec<f32> {
     }
 
     let rms = (centered.iter().map(|s| s * s).sum::<f32>() / centered.len() as f32).sqrt();
-    let peak_gain = 0.85 / peak;
-    let rms_gain = if rms > 1e-6 { 0.12 / rms } else { peak_gain };
-    let gain = peak_gain.min(rms_gain).clamp(1.0, 20.0);
+    let peak_gain = 0.92 / peak;
+    let rms_gain = if rms > 1e-6 { 0.08 / rms } else { peak_gain };
+    let gain = peak_gain.min(rms_gain).clamp(0.8, 12.0);
 
     for sample in &mut centered {
         *sample = (*sample * gain).clamp(-1.0, 1.0);
     }
+
+    // Give the decoder a tiny silence tail so final phonemes are less likely to clip.
+    centered.extend(std::iter::repeat_n(0.0, 800));
 
     centered
 }

@@ -1,9 +1,9 @@
-/* Daydream Voice — content script styles
-   All selectors prefixed with .daydream- / .dd- to avoid page conflicts. */
+/* voice-typing — content script styles
+   All selectors prefixed with .voice-typing- / .dd- to avoid page conflicts. */
 
 /* ── Overlay container ─────────────────────────────────────────────────── */
 
-.daydream-overlay {
+.voice-typing-overlay {
   position: fixed;
   z-index: 2147483647;
   width: 22px;
@@ -21,13 +21,13 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.daydream-overlay:hover {
+.voice-typing-overlay:hover {
   transform: scale(1.12);
 }
 
 /* ── Icon wrapper ──────────────────────────────────────────────────────── */
 
-.daydream-icon {
+.voice-typing-icon {
   width: 16px;
   height: 16px;
   display: flex;
@@ -42,76 +42,76 @@
 
 /* ── Idle — dark mic (default) ─────────────────────────────────────────── */
 
-.daydream-overlay[data-state="idle"] .dd-p {
+.voice-typing-overlay[data-state="idle"] .dd-p {
   fill: #1a1a1a;
 }
-.daydream-overlay[data-state="idle"] .dd-s {
+.voice-typing-overlay[data-state="idle"] .dd-s {
   fill: #333;
 }
 
 /* ── Disconnected — muted grey ─────────────────────────────────────────── */
 
-.daydream-overlay[data-state="disconnected"] {
+.voice-typing-overlay[data-state="disconnected"] {
   background: rgba(240, 240, 240, 0.9);
 }
-.daydream-overlay[data-state="disconnected"] .dd-p {
+.voice-typing-overlay[data-state="disconnected"] .dd-p {
   fill: #888;
 }
-.daydream-overlay[data-state="disconnected"] .dd-a {
+.voice-typing-overlay[data-state="disconnected"] .dd-a {
   fill: #666;
 }
 
 /* ── Booting — orange glow + spinning clock ────────────────────────────── */
 
-.daydream-overlay[data-state="booting"] {
+.voice-typing-overlay[data-state="booting"] {
   background: rgba(255, 160, 40, 0.15);
   box-shadow:
     0 0 10px 2px rgba(255, 140, 0, 0.55),
     0 0 24px 4px rgba(255, 100, 0, 0.25);
   animation: dd-glow-pulse 1.2s ease-in-out infinite;
 }
-.daydream-overlay[data-state="booting"] .dd-p {
+.voice-typing-overlay[data-state="booting"] .dd-p {
   fill: #ff8c00;
 }
-.daydream-overlay[data-state="booting"] .dd-s {
+.voice-typing-overlay[data-state="booting"] .dd-s {
   fill: #cc6600;
 }
-.daydream-overlay[data-state="booting"] .dd-spin {
+.voice-typing-overlay[data-state="booting"] .dd-spin {
   animation: dd-spin 1.8s linear infinite;
   transform-origin: center;
 }
 
 /* ── Active — gradient mic + wifi arcs ─────────────────────────────────── */
 
-.daydream-overlay[data-state="active"] {
+.voice-typing-overlay[data-state="active"] {
   background: rgba(155, 48, 255, 0.1);
   box-shadow:
     0 0 8px 2px rgba(155, 48, 255, 0.35),
     0 0 20px 4px rgba(255, 51, 51, 0.15);
 }
-.daydream-overlay[data-state="active"] .dd-p {
+.voice-typing-overlay[data-state="active"] .dd-p {
   fill: url(#ddGrad);
 }
-.daydream-overlay[data-state="active"] .dd-s {
+.voice-typing-overlay[data-state="active"] .dd-s {
   fill: url(#ddGrad);
 }
 
 /* ── Error — red warning ───────────────────────────────────────────────── */
 
-.daydream-overlay[data-state="error"] {
+.voice-typing-overlay[data-state="error"] {
   background: rgba(255, 68, 68, 0.12);
   box-shadow: 0 0 8px 2px rgba(255, 68, 68, 0.4);
 }
-.daydream-overlay[data-state="error"] .dd-p {
+.voice-typing-overlay[data-state="error"] .dd-p {
   fill: #ff4444;
 }
-.daydream-overlay[data-state="error"] .dd-s {
+.voice-typing-overlay[data-state="error"] .dd-s {
   fill: #cc0000;
 }
 
 /* ── Wifi arcs (active state only) ─────────────────────────────────────── */
 
-.daydream-arcs {
+.voice-typing-arcs {
   position: absolute;
   bottom: 100%;
   left: 50%;
@@ -121,11 +121,11 @@
   display: none;
 }
 
-.daydream-overlay[data-state="active"] .daydream-arcs {
+.voice-typing-overlay[data-state="active"] .voice-typing-arcs {
   display: block;
 }
 
-.daydream-arc {
+.voice-typing-arc {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -135,7 +135,7 @@
   opacity: 0;
 }
 
-.daydream-arc-1 {
+.voice-typing-arc-1 {
   width: 10px;
   height: 5px;
   bottom: 0;
@@ -143,7 +143,7 @@
   border-color: #ff5555;
   animation: dd-emanate 1.4s 0s ease-in-out infinite;
 }
-.daydream-arc-2 {
+.voice-typing-arc-2 {
   width: 16px;
   height: 8px;
   bottom: 5px;
@@ -151,7 +151,7 @@
   border-color: #bb44ff;
   animation: dd-emanate 1.4s 0.18s ease-in-out infinite;
 }
-.daydream-arc-3 {
+.voice-typing-arc-3 {
   width: 22px;
   height: 11px;
   bottom: 10px;

@@ -235,6 +235,8 @@ impl TechAcronymMapper {
             }
         }
 
+        processed = normalize_spoken_symbols(&processed);
+
         MapResult {
             text: processed,
             corrected_words,
@@ -291,4 +293,118 @@ fn replace_case_insensitive_whole_phrase(
 
 fn is_word_char(byte: u8) -> bool {
     byte.is_ascii_alphanumeric() || byte == b'_'
+}
+
+fn normalize_spoken_symbols(input: &str) -> String {
+    let collapsed = collapse_double_dash_tokens(input);
+    let joined = join_symbol_runs(&collapsed);
+    lowercase_domain_tokens(&joined)
+}
+
+fn collapse_double_dash_tokens(input: &str) -> String {
+    let parts: Vec<&str> = input.split_whitespace().collect();
+    let mut collapsed = Vec::with_capacity(parts.len());
+    let mut index = 0usize;
+
+    while index < parts.len() {
+        if index + 1 < parts.len() && parts[index] == "-" && parts[index + 1] == "-" {
+            collapsed.push(String::from("--"));
+            index += 2;
+            continue;
+        }
+
+        collapsed.push(parts[index].to_owned());
+        index += 1;
+    }
+
+    collapsed.join(" ")
+}
+
+fn join_symbol_runs(input: &str) -> String {
+    let parts: Vec<&str> = input.split_whitespace().collect();
+    let mut output = String::new();
+    let mut suppress_space_before_next = false;
+
+    for index in 0..parts.len() {
+        let token = parts[index];
+        let previous = if index > 0 { Some(parts[index - 1]) } else { None };
+        let next = parts.get(index + 1).copied();
+
+        if token == "--" && previous.is_some() && next.is_some_and(is_joinable_atom) {
+            if !output.is_empty() && !output.ends_with(' ') {
+                output.push(' ');
+            }
+            output.push_str("--");
+            suppress_space_before_next = true;
+            continue;
+        }
+
+        if is_inline_connector(token)
+            && previous.is_some_and(is_joinable_atom)
+            && next.is_some_and(is_joinable_atom)
+        {
+            output.push_str(token);
+            suppress_space_before_next = true;
+            continue;
+        }
+
+        if !output.is_empty() && !suppress_space_before_next {
+            output.push(' ');
+        }
+        output.push_str(token);
+        suppress_space_before_next = false;
+    }
+
+    output
+}
+
+fn lowercase_domain_tokens(input: &str) -> String {
+    input
+        .split_whitespace()
+        .map(|token| {
+            if looks_like_domain(token) {
+                token.to_ascii_lowercase()
+            } else {
+                token.to_owned()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn is_inline_connector(token: &str) -> bool {
+    matches!(token, "." | "/" | "_" | ":" | "-")
+}
+
+fn is_joinable_atom(token: &str) -> bool {
+    !token.is_empty() && token.chars().all(|ch| ch.is_ascii_alphanumeric())
+}
+
+fn looks_like_domain(token: &str) -> bool {
+    token.contains('.')
+        && !token.contains('/')
+        && !token.contains('@')
+        && token
+            .split('.')
+            .all(|segment| !segment.is_empty() && segment.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-'))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TechAcronymMapper;
+
+    #[test]
+    fn maps_double_dash_flag_compounds() {
+        let mut mapper = TechAcronymMapper::new();
+        mapper.add_correction("dash", "-");
+        assert_eq!(mapper.map("shell dash dash help"), "shell --help");
+    }
+
+    #[test]
+    fn maps_domain_style_dot_compounds() {
+        let mut mapper = TechAcronymMapper::new();
+        mapper.add_correction("dot", ".");
+        mapper.add_correction("w w w", "WWW");
+        assert_eq!(mapper.map("w w w dot aol dot com"), "www.aol.com");
+    }
 }

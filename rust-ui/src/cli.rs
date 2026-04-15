@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, anyhow};
-use daydream_asr::{CurrentWiredModel, DesktopSherpaAsrService};
-use daydream_core::AsrService;
+use voice_typing_asr::{CurrentWiredModel, DesktopSherpaAsrService};
+use voice_typing_core::AsrService;
 use std::path::PathBuf;
 
 pub fn run(args: &[String]) -> Result<()> {
@@ -64,11 +64,11 @@ fn default_wav_path() -> Result<PathBuf> {
 
 pub fn print_global_usage() {
     eprintln!("Usage:");
-    eprintln!("  daydream");
-    eprintln!("  daydream --help");
-    eprintln!("  daydream --nogui");
-    eprintln!("  daydream --nogui mic");
-    eprintln!("  daydream --nogui wav [path-to-wav]");
+    eprintln!("  voice-typing");
+    eprintln!("  voice-typing --help");
+    eprintln!("  voice-typing --nogui");
+    eprintln!("  voice-typing --nogui mic");
+    eprintln!("  voice-typing --nogui wav [path-to-wav]");
     eprintln!();
     eprintln!("Modes:");
     eprintln!("  default        Launch the GUI");

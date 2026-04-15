@@ -31,7 +31,7 @@ impl TextInjector {
         }
 
         let trimmed = text.trim();
-        let lower = trimmed.trim_end_matches('.').to_ascii_lowercase();
+        let lower = normalize_hot_command(trimmed);
 
         if matches!(lower.as_str(), "x enter" | "xenter" | "ex enter") {
             return HotPrefixResult::Consumed;
@@ -74,7 +74,7 @@ impl TextInjector {
 
     pub fn send_to_focused_window(&mut self, text: &str) -> Result<HotPrefixResult> {
         let trimmed = text.trim();
-        let lower = trimmed.trim_end_matches('.').to_ascii_lowercase();
+        let lower = normalize_hot_command(trimmed);
         let result = self.inject_text(text);
 
         if is_enter_command(&lower) {
@@ -112,6 +112,21 @@ fn is_enter_command(lower: &str) -> bool {
         lower,
         "press enter" | "new line" | "next line" | "x enter" | "xenter" | "ex enter" | "bang bang"
     )
+}
+
+fn normalize_hot_command(text: &str) -> String {
+    text.chars()
+        .map(|ch| {
+            if ch.is_ascii_alphabetic() || ch.is_ascii_whitespace() {
+                ch.to_ascii_lowercase()
+            } else {
+                ' '
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 pub fn parse_spelling(text: &str) -> String {

@@ -1,30 +1,51 @@
-<p align="center">
-  <img src="assets/icons/linux/icon128.png" width="96" />
-</p>
-
 <h3 align="center">voice-typing</h3>
 
 <p align="center">
-real time speech to text that types into any focused window or browser input
+Fast local voice typing for any focused window or browser input.
 </p>
 
 ---
 
-on device asr using sherpa-onnx running moonshine -- no cloud no api keys no latency
+<p align="center">
+  <img src="assets/readme/widget-pill.svg" width="284" alt="voice-typing widget" />
+</p>
 
-works system wide on windows macos and linux with a tiny always-on-top widget
+`voice-typing` is a Rust desktop app that listens to your microphone, transcribes speech on-device with Sherpa-ONNX + Moonshine, and types final text into the currently focused app.
 
-includes chrome and safari extensions that overlay a mic icon on every text field
+## Current Runtime
 
-### build
+- ASR model: `sherpa-onnx-moonshine-base-en-quantized-2026-02-27`
+- Segmentation: Silero VAD
+- Microphone capture: CPAL with resample/downmix to 16 kHz mono
+- Injection: Windows-focused system text injection into the active window
+- Browser support: optional Chrome and Safari overlays via `--features extensions`
 
-```
+## What Was Tuned
+
+- smaller live microphone chunks for faster VAD turnover
+- tighter VAD silence thresholds and shorter utterance caps
+- less aggressive gain shaping for better short-phrase stability
+- tiny decode tail padding to reduce clipped word endings
+- bounded audio queue trimming so latency does not drift upward
+- 30 ms UI polling for faster final-text injection
+- watchdog-based session recovery when the mic stream stalls
+- 10-minute idle auto-off if nothing useful is heard
+
+## Command Support
+
+- `bang bang` sends Enter
+- `new line` and `press enter` send Enter
+- custom spoken-term rewrites are loaded from `user_dictionary.txt`
+
+## Build
+
+```bash
 cargo run
 ```
 
-### build with browser extensions
+## Build With Browser Extensions
 
-```
+```bash
 cargo run --features extensions
 ```
 
@@ -32,9 +53,15 @@ extensions are written to `target/debug/extensions/chrome/` and `target/debug/ex
 
 load the chrome extension unpacked from `chrome://extensions`
 
-### cli mode
+## CLI Mode
 
-```
+```bash
 cargo run -- --nogui mic
 cargo run -- --nogui wav path/to/file.wav
 ```
+
+## Notes
+
+- Everything runs locally. No cloud ASR service or API keys are required.
+- The current typing path prioritizes fast, stable final-text commits over streaming partials.
+- Wakeword and speaker diarization are not part of the current runtime path.
