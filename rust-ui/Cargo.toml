@@ -2,6 +2,12 @@
 name = "voice-typing"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "Fast local voice typing for any focused window or browser input"
+repository = "https://github.com/maceip/voice-typing"
+homepage = "https://github.com/maceip/voice-typing"
+documentation = "https://docs.rs/voice-typing"
+readme = "README.md"
 default-run = "voice-typing"
 
 [[bin]]
@@ -15,10 +21,10 @@ extensions = ["dep:voice-typing-ext"]
 [dependencies]
 anyhow = "1.0"
 bzip2 = "0.4"
-voice-typing-asr = { path = "../rust-asr" }
-voice-typing-core = { path = "../rust-core" }
-voice-typing-ext = { path = "../rust-ext", optional = true }
-voice-typing-platform-windows = { path = "../rust-platform-windows" }
+voice-typing-asr = { version = "0.1.0", path = "../rust-asr" }
+voice-typing-core = { version = "0.1.0", path = "../rust-core" }
+voice-typing-ext = { version = "0.1.0", path = "../rust-ext", optional = true }
+voice-typing-platform-windows = { version = "0.1.0", path = "../rust-platform-windows" }
 futures-util = "0.3"
 iced = { version = "0.14.0", features = ["tokio", "svg", "canvas"] }
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }

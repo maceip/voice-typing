@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
 
 #[cfg(target_os = "windows")]
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
@@ -45,7 +45,7 @@ pub fn resolve_backdrop(preference: BackdropPreference) -> BackdropMaterial {
 pub fn apply_backdrop(window: &dyn HasWindowHandle, material: BackdropMaterial) -> Result<()> {
     let handle = window
         .window_handle()
-        .context("failed to access native window handle")?;
+        .map_err(|err| anyhow!("failed to access native window handle: {err}"))?;
 
     let RawWindowHandle::Win32(handle) = handle.as_raw() else {
         bail!("native window is not a Win32 HWND");

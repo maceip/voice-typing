@@ -2,6 +2,12 @@
 name = "voice-typing-platform-windows"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "Windows-specific window material and text injection support for voice-typing"
+repository = "https://github.com/maceip/voice-typing"
+homepage = "https://github.com/maceip/voice-typing"
+documentation = "https://docs.rs/voice-typing-platform-windows"
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0"

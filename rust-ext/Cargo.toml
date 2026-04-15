@@ -2,7 +2,12 @@
 name = "voice-typing-ext"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 description = "Browser extensions (Chrome, Safari) for the voice-typing overlay"
+repository = "https://github.com/maceip/voice-typing"
+homepage = "https://github.com/maceip/voice-typing"
+documentation = "https://docs.rs/voice-typing-ext"
+readme = "README.md"
 links = "voice_typing_ext"
 
 [build-dependencies]

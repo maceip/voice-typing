@@ -2,7 +2,13 @@
 name = "voice-typing-audio"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "Audio helpers and abstractions for the voice-typing workspace"
+repository = "https://github.com/maceip/voice-typing"
+homepage = "https://github.com/maceip/voice-typing"
+documentation = "https://docs.rs/voice-typing-audio"
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0"
-voice-typing-core = { path = "../rust-core" }
+voice-typing-core = { version = "0.1.0", path = "../rust-core" }
