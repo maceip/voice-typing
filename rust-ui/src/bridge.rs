@@ -42,7 +42,10 @@ impl GuiBridge {
     }
 }
 
-pub fn spawn() {
+pub fn spawn() -> std::io::Result<()> {
+    let std_listener = std::net::TcpListener::bind(("127.0.0.1", PORT))?;
+    std_listener.set_nonblocking(true)?;
+
     let (state_tx, state_rx) = watch::channel("idle".to_string());
     let (outgoing_tx, _) = broadcast::channel::<String>(256);
     let (command_tx, command_rx) = mpsc::unbounded_channel();
@@ -55,19 +58,22 @@ pub fn spawn() {
 
     std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().expect("bridge runtime");
-        rt.block_on(serve(state_rx, outgoing_tx, command_tx));
+        rt.block_on(serve(std_listener, state_rx, outgoing_tx, command_tx));
     });
+
+    Ok(())
 }
 
 async fn serve(
+    std_listener: std::net::TcpListener,
     state_rx: watch::Receiver<String>,
     outgoing_tx: broadcast::Sender<String>,
     command_tx: mpsc::UnboundedSender<ExtensionCommand>,
 ) {
-    let listener = match tokio::net::TcpListener::bind(format!("127.0.0.1:{PORT}")).await {
-        Ok(l) => l,
+    let listener = match tokio::net::TcpListener::from_std(std_listener) {
+        Ok(listener) => listener,
         Err(e) => {
-            eprintln!("[bridge] bind :{PORT} failed: {e}");
+            eprintln!("[bridge] adopt :{PORT} failed: {e}");
             return;
         }
     };

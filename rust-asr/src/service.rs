@@ -3,7 +3,6 @@ use crate::model::{CurrentWiredModel, WiredModelPaths};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use cpal::Stream;
-use voice_typing_core::{AsrResult, AsrService};
 use sherpa_onnx::{
     OfflineMoonshineModelConfig, OfflineRecognizer, OfflineRecognizerConfig, SileroVadModelConfig,
     VadModelConfig, VoiceActivityDetector,
@@ -15,6 +14,7 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
+use voice_typing_core::{AsrResult, AsrService};
 
 pub struct DesktopSherpaAsrService {
     configured_paths: Option<WiredModelPaths>,
@@ -152,29 +152,7 @@ impl Drop for DesktopSherpaAsrService {
 #[async_trait]
 impl AsrService for DesktopSherpaAsrService {
     async fn initialize(&mut self, model_path: &str) -> Result<()> {
-        let root =
-            std::env::current_dir().context("failed to resolve current working directory")?;
-        let paths = WiredModelPaths {
-            model_dir: root.join(model_path),
-            vad_model: root.join(CurrentWiredModel::VAD_PATH),
-            sample_rate: 16_000,
-        };
-
-        for required in [
-            "encoder_model.ort",
-            "decoder_model_merged.ort",
-            "tokens.txt",
-        ] {
-            let required_path = paths.model_dir.join(required);
-            required_path
-                .metadata()
-                .with_context(|| format!("missing model file {}", required_path.display()))?;
-        }
-        paths
-            .vad_model
-            .metadata()
-            .with_context(|| format!("missing VAD model {}", paths.vad_model.display()))?;
-
+        let paths = CurrentWiredModel::resolve_runtime_paths(model_path)?;
         self.configured_paths = Some(paths);
         Ok(())
     }
@@ -251,6 +229,7 @@ impl AsrService for DesktopSherpaAsrService {
             move |chunk| {
                 if !stop_for_callback.load(Ordering::SeqCst) {
                     telemetry_for_audio.mark_audio();
+                    telemetry_for_audio.mark_audio_level(audio_level(&chunk));
                     queue_for_callback.push_audio(chunk);
                 }
             },
@@ -350,12 +329,14 @@ pub struct SessionHealth {
     pub last_audio_age: Option<Duration>,
     pub last_result_age: Option<Duration>,
     pub last_error: Option<String>,
+    pub audio_level: f32,
 }
 
 struct SessionTelemetry {
     last_audio_at: Mutex<Option<Instant>>,
     last_result_at: Mutex<Option<Instant>>,
     last_error: Mutex<Option<String>>,
+    audio_level: Mutex<f32>,
 }
 
 impl SessionTelemetry {
@@ -364,6 +345,7 @@ impl SessionTelemetry {
             last_audio_at: Mutex::new(None),
             last_result_at: Mutex::new(None),
             last_error: Mutex::new(None),
+            audio_level: Mutex::new(0.0),
         }
     }
 
@@ -378,11 +360,20 @@ impl SessionTelemetry {
         if let Ok(mut value) = self.last_error.lock() {
             *value = None;
         }
+        if let Ok(mut value) = self.audio_level.lock() {
+            *value = 0.0;
+        }
     }
 
     fn mark_audio(&self) {
         if let Ok(mut value) = self.last_audio_at.lock() {
             *value = Some(Instant::now());
+        }
+    }
+
+    fn mark_audio_level(&self, level: f32) {
+        if let Ok(mut value) = self.audio_level.lock() {
+            *value = level.clamp(0.0, 1.0);
         }
     }
 
@@ -402,6 +393,9 @@ impl SessionTelemetry {
         if let Ok(mut value) = self.last_error.lock() {
             *value = None;
         }
+        if let Ok(mut value) = self.audio_level.lock() {
+            *value = 0.0;
+        }
     }
 
     fn snapshot(&self, worker_running: bool) -> SessionHealth {
@@ -419,12 +413,14 @@ impl SessionTelemetry {
             .and_then(|value| *value)
             .map(|value| now.saturating_duration_since(value));
         let last_error = self.last_error.lock().ok().and_then(|value| value.clone());
+        let audio_level = self.audio_level.lock().map(|value| *value).unwrap_or(0.0);
 
         SessionHealth {
             worker_running,
             last_audio_age,
             last_result_age,
             last_error,
+            audio_level,
         }
     }
 }
@@ -607,4 +603,14 @@ fn enhance_for_asr(samples: &[f32]) -> Vec<f32> {
     centered.extend(std::iter::repeat_n(0.0, 800));
 
     centered
+}
+
+pub(crate) fn audio_level(samples: &[f32]) -> f32 {
+    if samples.is_empty() {
+        return 0.0;
+    }
+
+    let rms =
+        (samples.iter().map(|sample| sample * sample).sum::<f32>() / samples.len() as f32).sqrt();
+    (rms * 18.0).clamp(0.0, 1.0).powf(0.75)
 }

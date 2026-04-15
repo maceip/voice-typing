@@ -6,3 +6,4 @@
 .DS_Store
 tmp-*.png
 assets/models/
+settings.json

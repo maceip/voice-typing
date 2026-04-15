@@ -1,5 +1,5 @@
 mod backdrop;
 pub mod injector;
 
-pub use backdrop::apply_mica_backdrop;
+pub use backdrop::{BackdropMaterial, BackdropPreference, apply_backdrop, resolve_backdrop};
 pub use injector::{HotPrefixResult, TextInjector};

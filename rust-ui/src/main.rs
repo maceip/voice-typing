@@ -4,6 +4,7 @@ mod bridge;
 mod cli;
 mod gui;
 mod icons;
+mod model_download;
 
 use anyhow::{Result, anyhow};
 
@@ -25,7 +26,8 @@ fn main() -> Result<()> {
         args.remove(index);
         cli::run(&args)
     } else {
-        bridge::spawn();
+        bridge::spawn()
+            .map_err(|err| anyhow!("another voice-typing instance is already running: {err}"))?;
         gui::run().map_err(|err| anyhow!(err.to_string()))
     }
 }

@@ -327,7 +327,11 @@ fn join_symbol_runs(input: &str) -> String {
 
     for index in 0..parts.len() {
         let token = parts[index];
-        let previous = if index > 0 { Some(parts[index - 1]) } else { None };
+        let previous = if index > 0 {
+            Some(parts[index - 1])
+        } else {
+            None
+        };
         let next = parts.get(index + 1).copied();
 
         if token == "--" && previous.is_some() && next.is_some_and(is_joinable_atom) {
@@ -384,9 +388,12 @@ fn looks_like_domain(token: &str) -> bool {
     token.contains('.')
         && !token.contains('/')
         && !token.contains('@')
-        && token
-            .split('.')
-            .all(|segment| !segment.is_empty() && segment.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-'))
+        && token.split('.').all(|segment| {
+            !segment.is_empty()
+                && segment
+                    .chars()
+                    .all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
+        })
 }
 
 #[cfg(test)]

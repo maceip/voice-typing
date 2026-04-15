@@ -14,12 +14,15 @@ extensions = ["dep:voice-typing-ext"]
 
 [dependencies]
 anyhow = "1.0"
+bzip2 = "0.4"
 voice-typing-asr = { path = "../rust-asr" }
 voice-typing-core = { path = "../rust-core" }
 voice-typing-ext = { path = "../rust-ext", optional = true }
 voice-typing-platform-windows = { path = "../rust-platform-windows" }
 futures-util = "0.3"
 iced = { version = "0.14.0", features = ["tokio", "svg", "canvas"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
 serde_json = "1"
+tar = "0.4"
 tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "sync", "net", "macros"] }
 tokio-tungstenite = "0.26"

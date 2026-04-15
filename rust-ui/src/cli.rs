@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, anyhow};
+use std::path::PathBuf;
 use voice_typing_asr::{CurrentWiredModel, DesktopSherpaAsrService};
 use voice_typing_core::AsrService;
-use std::path::PathBuf;
 
 pub fn run(args: &[String]) -> Result<()> {
     match parse_command(args)? {

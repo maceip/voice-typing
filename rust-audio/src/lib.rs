@@ -1,6 +1,6 @@
 use anyhow::Context;
-use voice_typing_core::TtsService;
 use std::process::Command;
+use voice_typing_core::TtsService;
 
 pub struct DesktopTtsService;
 
