@@ -19,16 +19,19 @@ default = []
 extensions = ["dep:voice-typing-ext"]
 
 [dependencies]
-anyhow = "1.0"
-bzip2 = "0.4"
-voice-typing-asr = { version = "0.1.0", path = "../rust-asr" }
-voice-typing-core = { version = "0.1.0", path = "../rust-core" }
-voice-typing-ext = { version = "0.1.0", path = "../rust-ext", optional = true }
-voice-typing-platform-windows = { version = "0.1.0", path = "../rust-platform-windows" }
+anyhow.workspace = true
+bzip2 = "0.6"
+voice-typing-asr.workspace = true
+voice-typing-core.workspace = true
+voice-typing-ext = { workspace = true, optional = true }
+voice-typing-platform-windows.workspace = true
 futures-util = "0.3"
-iced = { version = "0.14.0", features = ["tokio", "svg", "canvas"] }
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+iced = { version = "0.14.0", features = ["tokio", "svg", "canvas", "image"] }
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "rustls"] }
 serde_json = "1"
 tar = "0.4"
-tokio = { version = "1.48.0", features = ["rt", "rt-multi-thread", "sync", "net", "macros"] }
-tokio-tungstenite = "0.26"
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "sync", "net", "macros"] }
+tokio-tungstenite = "0.29"
+
+[build-dependencies]
+winresource = "0.1"

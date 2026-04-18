@@ -1,21 +1,38 @@
-<svg width="284" height="89" viewBox="0 0 284 89" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="284" height="133" viewBox="0 0 284 133" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="shadow" x="0" y="0" width="284" height="89" filterUnits="userSpaceOnUse">
-      <feOffset dy="6"/>
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.22 0"/>
+    <linearGradient id="bgGlow" x1="20" y1="98" x2="88" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF5D59"/>
+      <stop offset="0.52" stop-color="#D05B8E"/>
+      <stop offset="1" stop-color="#A468FF"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="40" y1="31" x2="221" y2="94" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2F5F8" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#D2D8E1" stop-opacity="0.14"/>
+    </linearGradient>
+    <filter id="shadow" x="12" y="24" width="223" height="72" filterUnits="userSpaceOnUse">
+      <feOffset dy="10"/>
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.03 0 0 0 0 0.03 0 0 0 0 0.05 0 0 0 0.28 0"/>
       <feBlend in="SourceGraphic" mode="normal"/>
     </filter>
   </defs>
+
+  <rect width="284" height="133" fill="#09090A"/>
+  <rect y="96" width="284" height="37" fill="#7A0D0D"/>
+  <path d="M0 100H89L54 67H0V100Z" fill="url(#bgGlow)"/>
+
   <g filter="url(#shadow)">
-    <rect x="24" y="16" width="236" height="49" rx="14" fill="#1E1E1F" stroke="#2A2A2C"/>
-    <rect x="44" y="28" width="6" height="24" rx="3" fill="#D6D6D8"/>
-    <path d="M96.5 29.5C96.5 26.4624 98.9624 24 102 24C105.038 24 107.5 26.4624 107.5 29.5V39.5C107.5 42.5376 105.038 45 102 45C98.9624 45 96.5 42.5376 96.5 39.5V29.5Z" fill="#F4F4F5"/>
-    <path d="M93.5 38.5C93.5 43.1944 97.3056 47 102 47C106.694 47 110.5 43.1944 110.5 38.5" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
-    <path d="M102 48.5V54" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
-    <path d="M97.5 54H106.5" stroke="#F4F4F5" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="217" cy="40.5" r="2.5" fill="#C9C9CC"/>
-    <circle cx="228" cy="40.5" r="2.5" fill="#C9C9CC"/>
-    <circle cx="239" cy="40.5" r="2.5" fill="#C9C9CC"/>
+    <rect x="22" y="32" width="187" height="58" rx="15" fill="url(#glass)"/>
+    <rect x="22.75" y="32.75" width="185.5" height="56.5" rx="14.25" stroke="#7AA2FF" stroke-opacity="0.42" stroke-width="1.5"/>
+    <rect x="48" y="47" width="7" height="30" rx="3.5" fill="#F1F1F1" fill-opacity="0.82"/>
+
+    <path d="M107.5 51.5C107.5 47.9101 110.41 45 114 45C117.59 45 120.5 47.9101 120.5 51.5V63.5C120.5 67.0899 117.59 70 114 70C110.41 70 107.5 67.0899 107.5 63.5V51.5Z" fill="#69A0FF"/>
+    <path d="M103.5 62.5C103.5 68.299 108.201 73 114 73C119.799 73 124.5 68.299 124.5 62.5" stroke="#69A0FF" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M114 74V80.5" stroke="#69A0FF" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M108.5 80.5H119.5" stroke="#69A0FF" stroke-width="2.4" stroke-linecap="round"/>
+
+    <circle cx="184" cy="61" r="2.1" fill="#E8EBF0" fill-opacity="0.56"/>
+    <circle cx="193.5" cy="61" r="2.1" fill="#E8EBF0" fill-opacity="0.56"/>
+    <circle cx="203" cy="61" r="2.1" fill="#E8EBF0" fill-opacity="0.56"/>
   </g>
 </svg>

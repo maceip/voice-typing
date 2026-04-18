@@ -10,5 +10,5 @@ documentation = "https://docs.rs/voice-typing-audio"
 readme = "README.md"
 
 [dependencies]
-anyhow = "1.0"
-voice-typing-core = { version = "0.1.0", path = "../rust-core" }
+anyhow.workspace = true
+voice-typing-core.workspace = true
