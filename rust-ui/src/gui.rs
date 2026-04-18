@@ -20,15 +20,22 @@ use voice_typing_platform_windows::{
 
 // ── Layout ──────────────────────────────────────────────────────────────
 
-const WIN_W: f32 = 142.0;
+const WIDGET_WIDTH_SCALE: f32 = 2.0 / 3.0;
+const WIN_W: f32 = 142.0 * WIDGET_WIDTH_SCALE;
 const WIN_H: f32 = 34.0;
 const PANEL_W: f32 = 640.0;
 const PANEL_H: f32 = 580.0;
-const RADIUS: f32 = 12.0;
+const RADIUS: f32 = 6.0;
+const PANEL_RADIUS: f32 = 8.0;
+const HANDLE_SLOT_W: f32 = 24.0 * WIDGET_WIDTH_SCALE;
+const HANDLE_LEFT_PAD: f32 = 8.0 * WIDGET_WIDTH_SCALE;
+const TRAILING_SLOT_W: f32 = 44.0 * WIDGET_WIDTH_SCALE;
+const TRAILING_BUTTON_W: f32 = 40.0 * WIDGET_WIDTH_SCALE;
+const WIDGET_RIGHT_PAD: f32 = 8.0 * WIDGET_WIDTH_SCALE;
 
 // ── Palette ─────────────────────────────────────────────────────────────
 
-const SURFACE: Color = Color::from_rgba8(30, 30, 31, 0.99);
+const SURFACE: Color = Color::from_rgba8(30, 30, 31, 0.45);
 const SURFACE_EDGE: Color = Color::from_rgb8(36, 36, 38);
 const HANDLE: Color = Color::from_rgb8(214, 214, 216);
 const BLUE: Color = Color::from_rgb8(41, 121, 255);
@@ -37,7 +44,7 @@ const RED: Color = Color::from_rgb8(255, 74, 74);
 const GLYPH: Color = Color::from_rgb8(200, 200, 202);
 const WHITE: Color = Color::WHITE;
 const ORANGE: Color = Color::from_rgb8(255, 165, 0);
-const PANEL_BG: Color = Color::from_rgba8(24, 24, 26, 0.985);
+const PANEL_BG: Color = Color::from_rgba8(24, 24, 26, 0.75);
 const IDLE_SUSPEND_AFTER: Duration = Duration::from_secs(10 * 60);
 const RECOVERY_COOLDOWN: Duration = Duration::from_secs(6);
 const AUDIO_STALL_TIMEOUT: Duration = Duration::from_secs(3);
@@ -51,6 +58,10 @@ pub fn run() -> iced::Result {
         .window(window_settings())
         .subscription(subscription)
         .settings(Settings::default())
+        .style(|_app, _theme| iced::theme::Style {
+            background_color: Color::TRANSPARENT,
+            text_color: Color::WHITE,
+        })
         .run()
 }
 
@@ -119,7 +130,6 @@ enum SettingsTab {
     General,
     VoiceMapping,
     VoiceExec,
-    Model,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -535,23 +545,23 @@ fn update(app: &mut VoiceTypingApp, msg: Msg) -> Task<Msg> {
 fn view(app: &VoiceTypingApp) -> Element<'_, Msg> {
     let chrome = row![
         container(left_handle())
-            .width(Length::Fixed(24.0))
+            .width(Length::Fixed(HANDLE_SLOT_W))
             .height(Length::Fixed(20.0))
             .padding(Padding {
                 top: 0.0,
                 right: 0.0,
                 bottom: 0.0,
-                left: 8.0,
+                left: HANDLE_LEFT_PAD,
             })
             .align_left(Length::Fill)
             .center_y(Length::Fill),
         container(mic_btn(app))
             .width(Length::Fill)
-            .height(Length::Fixed(20.0))
+            .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill),
         container(trailing_menu())
-            .width(Length::Fixed(44.0))
+            .width(Length::Fixed(TRAILING_SLOT_W))
             .height(Length::Fixed(WIN_H))
             .center_x(Length::Fill)
             .center_y(Length::Fill),
@@ -559,7 +569,7 @@ fn view(app: &VoiceTypingApp) -> Element<'_, Msg> {
     .align_y(Alignment::Center)
     .padding(Padding {
         top: 6.0,
-        right: 8.0,
+        right: WIDGET_RIGHT_PAD,
         bottom: 6.0,
         left: 0.0,
     });
@@ -619,8 +629,8 @@ fn mic_btn(app: &VoiceTypingApp) -> Element<'_, Msg> {
     button(content)
         .on_press(Msg::Mic)
         .padding(0)
-        .width(Length::Fixed(22.0))
-        .height(Length::Fixed(22.0))
+        .width(Length::Fixed(24.0))
+        .height(Length::Fixed(24.0))
         .style(move |_, _| iced::widget::button::Style {
             background: Some(Background::Color(Color::TRANSPARENT)),
             text_color: WHITE,
@@ -676,7 +686,7 @@ fn shell_style(app: &VoiceTypingApp) -> iced::widget::container::Style {
     };
 
     iced::widget::container::Style {
-        background: Some(Background::Color(widget_surface())),
+        background: Some(Background::Color(widget_surface(material))),
         border: Border {
             radius: RADIUS.into(),
             width: border_width,
@@ -711,7 +721,7 @@ fn trailing_menu<'a>() -> Element<'a, Msg> {
     container(
         button(
             text("…")
-                .size(20)
+                .size(18)
                 .line_height(iced::widget::text::LineHeight::Relative(1.0))
                 .color(GLYPH),
         )
@@ -729,7 +739,7 @@ fn trailing_menu<'a>() -> Element<'a, Msg> {
         })
         .padding(0),
     )
-    .width(Length::Fixed(40.0))
+    .width(Length::Fixed(TRAILING_BUTTON_W))
     .height(Length::Fixed(WIN_H))
     .padding(Padding {
         top: 0.0,
@@ -745,10 +755,17 @@ fn trailing_menu<'a>() -> Element<'a, Msg> {
 // ── Window setup ────────────────────────────────────────────────────────
 
 fn window_settings() -> window::Settings {
+    let icon = window::icon::from_file_data(
+        include_bytes!("../../assets/icons/windows/icon256.png"),
+        None,
+    )
+    .ok();
+
     window::Settings {
         size: iced::Size::new(WIN_W, WIN_H),
         min_size: Some(iced::Size::new(WIN_W, WIN_H)),
         level: window::Level::AlwaysOnTop,
+        icon,
         decorations: false,
         resizable: false,
         transparent: true,
@@ -1011,51 +1028,85 @@ fn set_settings_open(app: &mut VoiceTypingApp, open: bool) -> Task<Msg> {
 }
 
 fn settings_panel(app: &VoiceTypingApp) -> Element<'_, Msg> {
-    let mut tabs = row![
-        tab_button("General", SettingsTab::General, app.settings_tab),
-        tab_button("Voice Mapping", SettingsTab::VoiceMapping, app.settings_tab),
-    ]
+    let mut tabs = row![tab_button(
+        "Mappings",
+        SettingsTab::VoiceMapping,
+        app.settings_tab,
+        app,
+    ),]
     .spacing(0)
     .align_y(Alignment::End);
 
     if app.commands_enabled {
         tabs = tabs.push(tab_button(
-            "Voice Exec",
+            "Commands",
             SettingsTab::VoiceExec,
             app.settings_tab,
+            app,
         ));
     }
 
-    tabs = tabs.push(tab_button("Model", SettingsTab::Model, app.settings_tab));
+    tabs = tabs.push(tab_button(
+        "System",
+        SettingsTab::General,
+        app.settings_tab,
+        app,
+    ));
 
     let body = match app.settings_tab {
-        SettingsTab::General => general_tab(app),
         SettingsTab::VoiceMapping => voice_mapping_tab(app),
         SettingsTab::VoiceExec => voice_exec_tab(app),
-        SettingsTab::Model => model_tab(app),
+        SettingsTab::General => general_tab(app),
     };
 
     let rows = column![
-        text("Settings").size(20).color(WHITE),
-        tabs,
+        row![
+            column![
+                text("Settings").size(16).color(WHITE),
+                text("Window, shortcuts, and model source")
+                    .size(11)
+                    .color(GLYPH),
+            ]
+            .spacing(2),
+            Space::new().width(Length::Fill),
+            tabs,
+        ]
+        .align_y(Alignment::End)
+        .padding(Padding {
+            top: 0.0,
+            right: 8.0,
+            bottom: 0.0,
+            left: 4.0,
+        }),
         container(scrollable(body).height(Length::Fill))
             .width(Length::Fill)
+            .height(Length::Fill)
             .style(|_| panel_inner_style(app)),
-        row![
-            button(text("Quit All").size(14))
-                .on_press(Msg::QuitAll)
-                .style(|_, _| pill_button_style(true)),
-            Space::new().width(Length::Fill),
-            button(text("Done").size(14))
-                .on_press(Msg::CloseSettings)
-                .style(|_, _| pill_button_style(false)),
-        ]
-        .align_y(Alignment::Center)
-        .spacing(10),
+        container(
+            row![
+                button(text("Quit All").size(13))
+                    .on_press(Msg::QuitAll)
+                    .style(|_, _| pill_button_style(true)),
+                Space::new().width(Length::Fill),
+                button(text("Done").size(13))
+                    .on_press(Msg::CloseSettings)
+                    .style(|_, _| pill_button_style(false)),
+            ]
+            .align_y(Alignment::Center)
+            .spacing(8),
+        )
+        .width(Length::Fill)
+        .padding(Padding {
+            top: 2.0,
+            right: 0.0,
+            bottom: 0.0,
+            left: 0.0,
+        }),
     ]
-    .spacing(12);
+    .spacing(10)
+    .height(Length::Fill);
 
-    container(rows.padding(16))
+    container(rows.padding(12))
         .width(Length::Fill)
         .height(Length::Fill)
         .style(|_| panel_style(app))
@@ -1063,35 +1114,80 @@ fn settings_panel(app: &VoiceTypingApp) -> Element<'_, Msg> {
 }
 
 fn general_tab(app: &VoiceTypingApp) -> Element<'_, Msg> {
+    let auto_label = format!("Auto  ({})", current_model_label());
+    let manual_model_controls: Element<'_, Msg> = if app.model_mode == ModelMode::Manual {
+        column![
+            text_input("path to model directory", &app.manual_model_path)
+                .on_input(Msg::ManualModelPathChanged)
+                .padding(8)
+                .size(13)
+                .style(|_, _| text_field_style(app))
+                .width(Length::Fill),
+            text("Folder containing encoder_model.ort, decoder_model_merged.ort, and tokens.txt.")
+                .size(11)
+                .color(GLYPH),
+        ]
+        .spacing(4)
+        .into()
+    } else {
+        Space::new().height(0).into()
+    };
+
     column![
-        checkbox(app.auto_off_enabled)
-            .label("Turn off after 10m no voice detected")
-            .on_toggle(Msg::SetAutoOff)
+        settings_section(
+            "Behavior",
+            "Idle and shortcut behavior",
+            column![
+                checkbox(app.auto_off_enabled)
+                    .label("Turn off after 10m with no voice activity")
+                    .on_toggle(Msg::SetAutoOff)
+                    .spacing(10)
+                    .size(16),
+                checkbox(app.commands_enabled)
+                    .label("Voice command execution")
+                    .on_toggle(Msg::SetCommandsEnabled)
+                    .spacing(10)
+                    .size(16),
+            ]
             .spacing(10)
-            .size(16),
-        checkbox(app.commands_enabled)
-            .label("Voice command exec")
-            .on_toggle(Msg::SetCommandsEnabled)
-            .spacing(10)
-            .size(16),
-        text("Material:").size(14).color(GLYPH),
-        setting_radio(
-            "Light",
-            "Acrylic",
-            BackdropPreference::Light,
-            app.backdrop_preference
         ),
-        setting_radio(
-            "Dark",
-            "Mica",
-            BackdropPreference::Dark,
-            app.backdrop_preference
+        settings_section(
+            "Window Material",
+            "Backdrop and glass treatment",
+            column![
+                setting_radio(
+                    "Light",
+                    "Acrylic glass",
+                    BackdropPreference::Light,
+                    app.backdrop_preference,
+                    app,
+                ),
+                setting_radio(
+                    "Dark",
+                    "Mica surface",
+                    BackdropPreference::Dark,
+                    app.backdrop_preference,
+                    app,
+                ),
+                setting_radio(
+                    "Follow System",
+                    "Switches with the Windows theme",
+                    BackdropPreference::FollowSystem,
+                    app.backdrop_preference,
+                    app,
+                ),
+            ]
+            .spacing(8)
         ),
-        setting_radio(
-            "Follow System",
-            "Switches with Windows theme",
-            BackdropPreference::FollowSystem,
-            app.backdrop_preference,
+        settings_section(
+            "Speech Model",
+            "Choose where recognition runs from",
+            column![
+                model_radio(auto_label, ModelMode::Auto, app.model_mode, app),
+                model_radio("Manual".to_owned(), ModelMode::Manual, app.model_mode, app),
+                manual_model_controls,
+            ]
+            .spacing(8)
         ),
     ]
     .spacing(14)
@@ -1102,58 +1198,32 @@ fn general_tab(app: &VoiceTypingApp) -> Element<'_, Msg> {
 fn voice_mapping_tab(app: &VoiceTypingApp) -> Element<'_, Msg> {
     let mut mapping_table = column![mapping_header(), new_mapping_row(app)].spacing(6);
     for (index, row_data) in app.custom_entries.iter().enumerate() {
-        mapping_table = mapping_table.push(mapping_row(index, row_data));
+        mapping_table = mapping_table.push(mapping_row(index, row_data, app));
     }
 
-    let content = column![
-        text("Utterance to text mappings").size(14).color(GLYPH),
-        mapping_table
-    ]
-    .spacing(10);
+    let content = settings_section(
+        "Mappings",
+        "Spoken phrases converted into text",
+        mapping_table,
+    );
 
-    container(content.spacing(12).padding(12))
-        .width(Length::Fill)
-        .into()
+    container(content.padding(12)).width(Length::Fill).into()
 }
 
 fn voice_exec_tab(app: &VoiceTypingApp) -> Element<'_, Msg> {
     let mut command_table = column![command_header(), new_command_row(app)].spacing(6);
     for (index, row_data) in app.command_entries.iter().enumerate() {
-        command_table = command_table.push(command_row(index, row_data, app.capture_target));
+        command_table = command_table.push(command_row(index, row_data, app.capture_target, app));
     }
 
     container(
-        column![
-            text("Utterance to keypress").size(14).color(GLYPH),
-            command_table
-        ]
-        .spacing(10)
+        settings_section(
+            "Commands",
+            "Spoken phrases mapped to keyboard shortcuts",
+            command_table,
+        )
         .padding(12),
     )
-    .width(Length::Fill)
-    .into()
-}
-
-fn model_tab(app: &VoiceTypingApp) -> Element<'_, Msg> {
-    let auto_label = format!("Auto  ({})", current_model_label());
-
-    container(
-        column![
-            model_radio(auto_label, ModelMode::Auto, app.model_mode),
-            model_radio("Manual".to_owned(), ModelMode::Manual, app.model_mode),
-            text_input("path to model directory", &app.manual_model_path)
-                .on_input(Msg::ManualModelPathChanged)
-                .padding(10)
-                .size(13)
-                .style(|_, _| text_field_style())
-                .width(Length::Fill),
-            text("Manual mode expects a folder containing encoder_model.ort, decoder_model_merged.ort, and tokens.txt.")
-                .size(12)
-                .color(GLYPH),
-        ]
-        .spacing(12),
-    )
-    .padding(12)
     .width(Length::Fill)
     .into()
 }
@@ -1168,19 +1238,23 @@ fn mapping_header<'a>() -> Element<'a, Msg> {
     .into()
 }
 
-fn mapping_row<'a>(index: usize, row_data: &CustomMappingRow) -> Element<'a, Msg> {
+fn mapping_row<'a>(
+    index: usize,
+    row_data: &CustomMappingRow,
+    app: &'a VoiceTypingApp,
+) -> Element<'a, Msg> {
     row![
         text_input("spoken phrase", &row_data.spoken)
             .on_input(move |value| Msg::EditSpoken(index, value))
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         text_input("replacement", &row_data.written)
             .on_input(move |value| Msg::EditWritten(index, value))
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         button(text("Delete").size(12))
             .on_press(Msg::DeleteMapping(index))
@@ -1192,19 +1266,19 @@ fn mapping_row<'a>(index: usize, row_data: &CustomMappingRow) -> Element<'a, Msg
     .into()
 }
 
-fn new_mapping_row<'a>(app: &VoiceTypingApp) -> Element<'a, Msg> {
+fn new_mapping_row<'a>(app: &'a VoiceTypingApp) -> Element<'a, Msg> {
     row![
         text_input("new spoken phrase", &app.new_spoken)
             .on_input(Msg::NewSpokenChanged)
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         text_input("new replacement", &app.new_written)
             .on_input(Msg::NewWrittenChanged)
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         button(text("Add").size(12))
             .on_press(Msg::AddMapping)
@@ -1230,6 +1304,7 @@ fn command_row<'a>(
     index: usize,
     row_data: &VoiceCommandRow,
     capture_target: Option<CaptureTarget>,
+    app: &'a VoiceTypingApp,
 ) -> Element<'a, Msg> {
     let is_capturing = capture_target == Some(CaptureTarget::Existing(index));
     let label = if is_capturing {
@@ -1245,11 +1320,11 @@ fn command_row<'a>(
             .on_input(move |value| Msg::EditCommandSpoken(index, value))
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         button(text(label).size(13))
             .on_press(Msg::BeginCommandCapture(CaptureTarget::Existing(index)))
-            .style(|_, _| text_field_button_style())
+            .style(|_, _| text_field_button_style(app))
             .padding(Padding::from(8))
             .width(Length::FillPortion(4)),
         button(text("Delete").size(12))
@@ -1262,7 +1337,7 @@ fn command_row<'a>(
     .into()
 }
 
-fn new_command_row<'a>(app: &VoiceTypingApp) -> Element<'a, Msg> {
+fn new_command_row<'a>(app: &'a VoiceTypingApp) -> Element<'a, Msg> {
     let is_capturing = app.capture_target == Some(CaptureTarget::New);
     let label = if is_capturing {
         "Press keys…".to_owned()
@@ -1277,11 +1352,11 @@ fn new_command_row<'a>(app: &VoiceTypingApp) -> Element<'a, Msg> {
             .on_input(Msg::NewCommandSpokenChanged)
             .padding(8)
             .size(13)
-            .style(|_, _| text_field_style())
+            .style(|_, _| text_field_style(app))
             .width(Length::FillPortion(4)),
         button(text(label).size(13))
             .on_press(Msg::BeginCommandCapture(CaptureTarget::New))
-            .style(|_, _| text_field_button_style())
+            .style(|_, _| text_field_button_style(app))
             .padding(Padding::from(8))
             .width(Length::FillPortion(4)),
         button(text("Add").size(12))
@@ -1305,9 +1380,9 @@ fn panel_style(app: &VoiceTypingApp) -> iced::widget::container::Style {
         BackdropMaterial::Mica => Color::from_rgba8(0, 0, 0, 0.22),
     };
     iced::widget::container::Style {
-        background: Some(Background::Color(panel_surface())),
+        background: Some(Background::Color(panel_surface(material))),
         border: Border {
-            radius: 18.0.into(),
+            radius: PANEL_RADIUS.into(),
             width: 1.0,
             color: border_color,
         },
@@ -1321,14 +1396,15 @@ fn panel_style(app: &VoiceTypingApp) -> iced::widget::container::Style {
 }
 
 fn panel_inner_style(app: &VoiceTypingApp) -> iced::widget::container::Style {
-    let border_color = match current_backdrop_material(app) {
+    let material = current_backdrop_material(app);
+    let border_color = match material {
         BackdropMaterial::Acrylic => Color::from_rgba8(255, 255, 255, 0.2),
         BackdropMaterial::Mica => Color::from_rgba8(74, 82, 102, 0.36),
     };
     iced::widget::container::Style {
-        background: Some(Background::Color(panel_inner_surface())),
+        background: Some(Background::Color(panel_inner_surface(material))),
         border: Border {
-            radius: 12.0.into(),
+            radius: 5.0.into(),
             width: 1.0,
             color: border_color,
         },
@@ -1336,11 +1412,19 @@ fn panel_inner_style(app: &VoiceTypingApp) -> iced::widget::container::Style {
     }
 }
 
-fn text_field_style() -> iced::widget::text_input::Style {
+fn text_field_style(app: &VoiceTypingApp) -> iced::widget::text_input::Style {
+    let background = if cfg!(target_os = "windows") {
+        match current_backdrop_material(app) {
+            BackdropMaterial::Acrylic => Color::from_rgba8(28, 36, 48, 0.08),
+            BackdropMaterial::Mica => Color::from_rgba8(20, 22, 28, 0.56),
+        }
+    } else {
+        Color::from_rgb8(32, 32, 36)
+    };
     iced::widget::text_input::Style {
-        background: Background::Color(Color::from_rgb8(32, 32, 36)),
+        background: Background::Color(background),
         border: Border {
-            radius: 10.0.into(),
+            radius: 4.0.into(),
             width: 1.0,
             color: Color::from_rgb8(62, 62, 68),
         },
@@ -1351,12 +1435,20 @@ fn text_field_style() -> iced::widget::text_input::Style {
     }
 }
 
-fn text_field_button_style() -> iced::widget::button::Style {
+fn text_field_button_style(app: &VoiceTypingApp) -> iced::widget::button::Style {
+    let background = if cfg!(target_os = "windows") {
+        match current_backdrop_material(app) {
+            BackdropMaterial::Acrylic => Color::from_rgba8(28, 36, 48, 0.08),
+            BackdropMaterial::Mica => Color::from_rgba8(20, 22, 28, 0.56),
+        }
+    } else {
+        Color::from_rgb8(32, 32, 36)
+    };
     iced::widget::button::Style {
-        background: Some(Background::Color(Color::from_rgb8(32, 32, 36))),
+        background: Some(Background::Color(background)),
         text_color: WHITE,
         border: Border {
-            radius: 10.0.into(),
+            radius: 4.0.into(),
             width: 1.0,
             color: Color::from_rgb8(62, 62, 68),
         },
@@ -1365,11 +1457,17 @@ fn text_field_button_style() -> iced::widget::button::Style {
     }
 }
 
-fn tab_button<'a>(label: &'a str, tab: SettingsTab, current: SettingsTab) -> Element<'a, Msg> {
+fn tab_button<'a>(
+    label: &'a str,
+    tab: SettingsTab,
+    current: SettingsTab,
+    app: &'a VoiceTypingApp,
+) -> Element<'a, Msg> {
     let selected = tab == current;
+    let material = current_backdrop_material(app);
     button(text(label).size(13))
         .on_press(Msg::SelectTab(tab))
-        .style(move |_, status| tab_button_style(selected, status))
+        .style(move |_, status| tab_button_style(selected, material, status))
         .padding(Padding {
             top: 10.0,
             right: 14.0,
@@ -1379,7 +1477,12 @@ fn tab_button<'a>(label: &'a str, tab: SettingsTab, current: SettingsTab) -> Ele
         .into()
 }
 
-fn model_radio(label: String, mode: ModelMode, current: ModelMode) -> Element<'static, Msg> {
+fn model_radio(
+    label: String,
+    mode: ModelMode,
+    current: ModelMode,
+    app: &VoiceTypingApp,
+) -> Element<'_, Msg> {
     let selected = mode == current;
     button(
         row![
@@ -1390,7 +1493,7 @@ fn model_radio(label: String, mode: ModelMode, current: ModelMode) -> Element<'s
         .align_y(Alignment::Center),
     )
     .on_press(Msg::SelectModelMode(mode))
-    .style(|_, _| text_field_button_style())
+    .style(|_, _| text_field_button_style(app))
     .padding(Padding {
         top: 10.0,
         right: 12.0,
@@ -1406,6 +1509,7 @@ fn setting_radio<'a>(
     subtitle: &'a str,
     value: BackdropPreference,
     current: BackdropPreference,
+    app: &'a VoiceTypingApp,
 ) -> Element<'a, Msg> {
     let selected = value == current;
     button(
@@ -1421,7 +1525,7 @@ fn setting_radio<'a>(
         .align_y(Alignment::Center),
     )
     .on_press(Msg::SelectBackdropPreference(value))
-    .style(|_, _| text_field_button_style())
+    .style(|_, _| text_field_button_style(app))
     .padding(Padding {
         top: 10.0,
         right: 12.0,
@@ -1430,6 +1534,22 @@ fn setting_radio<'a>(
     })
     .width(Length::Fill)
     .into()
+}
+
+fn settings_section<'a>(
+    title: &'a str,
+    subtitle: &'a str,
+    content: impl Into<Element<'a, Msg>>,
+) -> iced::widget::Column<'a, Msg> {
+    column![
+        column![
+            text(title).size(14).color(WHITE),
+            text(subtitle).size(11).color(GLYPH),
+        ]
+        .spacing(2),
+        content.into(),
+    ]
+    .spacing(8)
 }
 
 fn pill_button_style(danger: bool) -> iced::widget::button::Style {
@@ -1448,7 +1568,7 @@ fn pill_button_style(danger: bool) -> iced::widget::button::Style {
         background: Some(Background::Color(bg)),
         text_color: WHITE,
         border: Border {
-            radius: 999.0.into(),
+            radius: 4.0.into(),
             width: 1.0,
             color: border,
         },
@@ -1459,17 +1579,19 @@ fn pill_button_style(danger: bool) -> iced::widget::button::Style {
 
 fn tab_button_style(
     selected: bool,
+    material: BackdropMaterial,
     status: iced::widget::button::Status,
 ) -> iced::widget::button::Style {
     let bg = if selected {
-        Color::from_rgb8(42, 42, 48)
+        panel_inner_surface(material)
     } else {
         Color::from_rgba8(0, 0, 0, 0.0)
     };
-    let border = if selected {
-        Color::from_rgb8(74, 74, 84)
+    let border_color = if selected {
+        // Match the panel inner border color logic
+        Color::from_rgba8(74, 82, 102, 0.36)
     } else {
-        Color::from_rgb8(48, 48, 54)
+        Color::from_rgba8(0, 0, 0, 0.0)
     };
     let text_color = if selected {
         WHITE
@@ -1481,9 +1603,9 @@ fn tab_button_style(
         background: Some(Background::Color(bg)),
         text_color,
         border: Border {
-            radius: iced::border::top(12.0).left(12.0).right(12.0),
+            radius: iced::border::top(5.0).left(5.0).right(5.0),
             width: 1.0,
-            color: border,
+            color: border_color,
         },
         shadow: Shadow::default(),
         ..Default::default()
@@ -1843,9 +1965,12 @@ fn mix_color(base: Color, highlight: Color, amount: f32) -> Color {
     }
 }
 
-fn widget_surface() -> Color {
+fn widget_surface(material: BackdropMaterial) -> Color {
     if cfg!(target_os = "windows") {
-        Color::from_rgba8(0, 0, 0, 0.0)
+        match material {
+            BackdropMaterial::Acrylic => Color::from_rgba8(236, 241, 248, 0.04),
+            BackdropMaterial::Mica => Color::from_rgba8(16, 24, 30, 0.24),
+        }
     } else if cfg!(target_os = "macos") {
         Color::from_rgba8(30, 30, 31, 0.78)
     } else {
@@ -1858,9 +1983,12 @@ fn current_backdrop_material(app: &VoiceTypingApp) -> BackdropMaterial {
         .unwrap_or_else(|| resolve_backdrop(app.backdrop_preference))
 }
 
-fn panel_surface() -> Color {
+fn panel_surface(material: BackdropMaterial) -> Color {
     if cfg!(target_os = "windows") {
-        Color::from_rgba8(0, 0, 0, 0.0)
+        match material {
+            BackdropMaterial::Acrylic => Color::from_rgba8(236, 241, 248, 0.05),
+            BackdropMaterial::Mica => Color::from_rgba8(18, 22, 28, 0.28),
+        }
     } else if cfg!(target_os = "macos") {
         Color::from_rgba8(24, 24, 26, 0.88)
     } else {
@@ -1868,9 +1996,12 @@ fn panel_surface() -> Color {
     }
 }
 
-fn panel_inner_surface() -> Color {
+fn panel_inner_surface(material: BackdropMaterial) -> Color {
     if cfg!(target_os = "windows") {
-        Color::from_rgba8(0, 0, 0, 0.0)
+        match material {
+            BackdropMaterial::Acrylic => Color::from_rgba8(28, 36, 48, 0.06),
+            BackdropMaterial::Mica => Color::from_rgba8(8, 12, 18, 0.18),
+        }
     } else if cfg!(target_os = "macos") {
         Color::from_rgba8(18, 18, 20, 0.76)
     } else {

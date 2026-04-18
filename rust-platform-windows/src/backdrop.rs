@@ -6,8 +6,14 @@ use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use windows::Win32::Foundation::HWND;
 #[cfg(target_os = "windows")]
 use windows::Win32::Graphics::Dwm::{
-    DWMSBT_TABBEDWINDOW, DWMSBT_TRANSIENTWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmSetWindowAttribute,
+    DWM_BB_ENABLE, DWM_BLURBEHIND, DWMNCRENDERINGPOLICY, DWMNCRP_DISABLED, DWMSBT_TABBEDWINDOW,
+    DWMWA_NCRENDERING_POLICY, DWMWA_SYSTEMBACKDROP_TYPE, DWMWA_USE_IMMERSIVE_DARK_MODE,
+    DwmEnableBlurBehindWindow, DwmExtendFrameIntoClientArea, DwmSetWindowAttribute,
 };
+#[cfg(target_os = "windows")]
+use windows::Win32::UI::Controls::MARGINS;
+#[cfg(target_os = "windows")]
+use windows::core::BOOL;
 #[cfg(target_os = "windows")]
 use winreg::RegKey;
 #[cfg(target_os = "windows")]
@@ -58,11 +64,43 @@ pub fn apply_backdrop(window: &dyn HasWindowHandle, material: BackdropMaterial) 
 #[cfg(target_os = "windows")]
 pub fn apply_backdrop_to_hwnd(hwnd: HWND, material: BackdropMaterial) -> Result<()> {
     let backdrop = match material {
-        BackdropMaterial::Acrylic => DWMSBT_TRANSIENTWINDOW.0,
+        BackdropMaterial::Acrylic => 1i32,
         BackdropMaterial::Mica => DWMSBT_TABBEDWINDOW.0,
     };
+    let margins = MARGINS {
+        cxLeftWidth: -1,
+        cxRightWidth: -1,
+        cyTopHeight: -1,
+        cyBottomHeight: -1,
+    };
+    let blur = DWM_BLURBEHIND {
+        dwFlags: DWM_BB_ENABLE,
+        fEnable: BOOL::from(true),
+        ..Default::default()
+    };
+    let is_dark_mode = BOOL::from(matches!(material, BackdropMaterial::Mica));
+    let nc_policy: DWMNCRENDERINGPOLICY = DWMNCRP_DISABLED;
 
     unsafe {
+        DwmExtendFrameIntoClientArea(hwnd, &margins)
+            .context("failed to extend acrylic frame into the client area")?;
+        DwmEnableBlurBehindWindow(hwnd, &blur)
+            .context("failed to enable window blur behind the client area")?;
+
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_NCRENDERING_POLICY,
+            &nc_policy as *const DWMNCRENDERINGPOLICY as *const _,
+            std::mem::size_of::<DWMNCRENDERINGPOLICY>() as u32,
+        );
+
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE,
+            &is_dark_mode as *const BOOL as *const _,
+            std::mem::size_of::<BOOL>() as u32,
+        );
+
         DwmSetWindowAttribute(
             hwnd,
             DWMWA_SYSTEMBACKDROP_TYPE,
