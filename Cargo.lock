@@ -5049,7 +5049,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "voice-typing"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bzip2 0.6.1",
@@ -5069,7 +5069,7 @@ dependencies = [
 
 [[package]]
 name = "voice-typing-asr"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5082,7 +5082,7 @@ dependencies = [
 
 [[package]]
 name = "voice-typing-audio"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "voice-typing-core",
@@ -5090,7 +5090,7 @@ dependencies = [
 
 [[package]]
 name = "voice-typing-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5100,14 +5100,14 @@ dependencies = [
 
 [[package]]
 name = "voice-typing-ext"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "zip",
 ]
 
 [[package]]
 name = "voice-typing-platform-windows"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "raw-window-handle",

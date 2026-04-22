@@ -1,6 +1,6 @@
 [package]
 name = "voice-typing"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 description = "Fast local voice typing for any focused window or browser input"
@@ -16,7 +16,11 @@ path = "src/main.rs"
 
 [features]
 default = []
-extensions = ["dep:voice-typing-ext"]
+extensions = [
+    "dep:futures-util",
+    "dep:tokio-tungstenite",
+    "dep:voice-typing-ext",
+]
 
 [dependencies]
 anyhow.workspace = true
@@ -25,13 +29,13 @@ voice-typing-asr.workspace = true
 voice-typing-core.workspace = true
 voice-typing-ext = { workspace = true, optional = true }
 voice-typing-platform-windows.workspace = true
-futures-util = "0.3"
+futures-util = { version = "0.3", optional = true }
 iced = { version = "0.14.0", features = ["tokio", "svg", "canvas", "image"] }
 reqwest = { version = "0.13", default-features = false, features = ["blocking", "rustls"] }
 serde_json = "1"
 tar = "0.4"
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "sync", "net", "macros"] }
-tokio-tungstenite = "0.29"
+tokio-tungstenite = { version = "0.29", optional = true }
 
-[build-dependencies]
+[target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"

@@ -1,17 +1,25 @@
+#[cfg(feature = "extensions")]
 use futures_util::{SinkExt, StreamExt};
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
+#[cfg(feature = "extensions")]
+use std::sync::Mutex;
+#[cfg(feature = "extensions")]
 use tokio::sync::{broadcast, mpsc, watch};
 
 const PORT: u16 = 36199;
 
+#[cfg_attr(not(feature = "extensions"), allow(dead_code))]
 #[derive(Debug, Clone)]
 pub enum ExtensionCommand {
     ToggleListening,
 }
 
 pub struct GuiBridge {
+    #[cfg(feature = "extensions")]
     state_tx: watch::Sender<String>,
+    #[cfg(feature = "extensions")]
     outgoing_tx: broadcast::Sender<String>,
+    #[cfg(feature = "extensions")]
     command_rx: Mutex<mpsc::UnboundedReceiver<ExtensionCommand>>,
 }
 
@@ -23,21 +31,36 @@ pub fn get() -> Option<&'static GuiBridge> {
 
 impl GuiBridge {
     pub fn set_state(&self, state: &str) {
-        let _ = self.state_tx.send(state.to_string());
-        let json = serde_json::json!({"type": "status", "state": state});
-        let _ = self.outgoing_tx.send(json.to_string());
+        #[cfg(not(feature = "extensions"))]
+        let _ = state;
+        #[cfg(feature = "extensions")]
+        {
+            let _ = self.state_tx.send(state.to_string());
+            let json = serde_json::json!({"type": "status", "state": state});
+            let _ = self.outgoing_tx.send(json.to_string());
+        }
     }
 
     pub fn send_transcript(&self, text: &str, is_final: bool) {
-        let json = serde_json::json!({
-            "type": "transcript",
-            "text": text,
-            "is_final": is_final
-        });
-        let _ = self.outgoing_tx.send(json.to_string());
+        #[cfg(not(feature = "extensions"))]
+        let _ = (text, is_final);
+        #[cfg(feature = "extensions")]
+        {
+            let json = serde_json::json!({
+                "type": "transcript",
+                "text": text,
+                "is_final": is_final
+            });
+            let _ = self.outgoing_tx.send(json.to_string());
+        }
     }
 
     pub fn try_recv_command(&self) -> Option<ExtensionCommand> {
+        #[cfg(not(feature = "extensions"))]
+        {
+            None
+        }
+        #[cfg(feature = "extensions")]
         self.command_rx.lock().ok()?.try_recv().ok()
     }
 }
@@ -46,24 +69,42 @@ pub fn spawn() -> std::io::Result<()> {
     let std_listener = std::net::TcpListener::bind(("127.0.0.1", PORT))?;
     std_listener.set_nonblocking(true)?;
 
+    #[cfg(feature = "extensions")]
     let (state_tx, state_rx) = watch::channel("idle".to_string());
+    #[cfg(feature = "extensions")]
     let (outgoing_tx, _) = broadcast::channel::<String>(256);
+    #[cfg(feature = "extensions")]
     let (command_tx, command_rx) = mpsc::unbounded_channel();
 
     let _ = BRIDGE.set(GuiBridge {
-        state_tx,
+        #[cfg(feature = "extensions")]
+        state_tx: state_tx.clone(),
+        #[cfg(feature = "extensions")]
         outgoing_tx: outgoing_tx.clone(),
+        #[cfg(feature = "extensions")]
         command_rx: Mutex::new(command_rx),
     });
 
     std::thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().expect("bridge runtime");
-        rt.block_on(serve(std_listener, state_rx, outgoing_tx, command_tx));
+        #[cfg(feature = "extensions")]
+        {
+            let rt = tokio::runtime::Runtime::new().expect("bridge runtime");
+            rt.block_on(serve(std_listener, state_rx, outgoing_tx, command_tx));
+        }
+
+        #[cfg(not(feature = "extensions"))]
+        {
+            let _listener = std_listener;
+            loop {
+                std::thread::park();
+            }
+        }
     });
 
     Ok(())
 }
 
+#[cfg(feature = "extensions")]
 async fn serve(
     std_listener: std::net::TcpListener,
     state_rx: watch::Receiver<String>,
