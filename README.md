@@ -12,6 +12,27 @@ Fast local voice typing for any focused window or browser input.
 
 `voice-typing` is a Rust desktop app that listens to your microphone, transcribes speech on-device with Sherpa-ONNX + Moonshine, and types final text into the currently focused app.
 
+## Preview
+
+<p align="center">
+  <img src="assets/demo.gif" width="880" alt="voice-typing demo" />
+</p>
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/ss1.png" width="320" alt="compact voice-typing widget" />
+    </td>
+    <td align="center">
+      <img src="assets/ss2.png" width="520" alt="voice-typing settings and commands view" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">Compact acrylic widget</td>
+    <td align="center">System settings, mappings, and commands</td>
+  </tr>
+</table>
+
 ## Current Runtime
 
 - ASR model: `sherpa-onnx-moonshine-base-en-quantized-2026-02-27`
@@ -42,6 +63,13 @@ Fast local voice typing for any focused window or browser input.
 ```bash
 cargo run
 ```
+
+root `cargo build` now targets the desktop app by default; use `cargo build --workspace` if you want every publishable crate.
+
+## Install
+
+- Releases publish Linux and macOS archives plus Windows packages.
+- Windows packaging includes an MSI via `scripts/build-msi.ps1`.
 
 ## Build With Browser Extensions
 

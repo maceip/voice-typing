@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="voice-typing"
+      Manufacturer="maceip"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="DA0215D5-1ACF-41A5-BC38-2C84033ADE42"
+      Scope="perUser"
+      InstallerVersion="500"
+      Compressed="yes">
+
+    <SummaryInformation Description="voice-typing installer" />
+    <MediaTemplate EmbedCab="yes" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <Icon Id="VoiceTypingIcoRef" SourceFile="$(var.IconPath)" />
+    <Property Id="ARPPRODUCTICON" Value="VoiceTypingIcoRef" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/maceip/voice-typing" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/maceip/voice-typing" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsDir" Name="Programs">
+        <Directory Id="INSTALLDIR" Name="voice-typing" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <ComponentGroup Id="MainComponents" Directory="INSTALLDIR">
+      <Component Id="VoiceTypingExe" Guid="2A6E7E4B-5F2A-4D10-9A9C-8F2E3CB5A001">
+        <File Id="VoiceTypingExeFile"
+              Source="$(var.BinPath)"
+              KeyPath="yes" />
+      </Component>
+
+      <Component Id="VoiceTypingIcon" Guid="3C9B1F47-7D2E-4B08-B55C-81E0C6D2F002">
+        <File Id="VoiceTypingIconFile"
+              Source="$(var.IconPath)"
+              Name="voice-typing.ico"
+              KeyPath="yes" />
+      </Component>
+
+      <Component Id="VoiceTypingShortcut" Guid="4E8A2B55-9C3F-4A91-8F02-72B3D41E9003">
+        <Shortcut Id="StartMenuShortcut"
+                  Directory="ProgramMenuFolder"
+                  Name="voice-typing"
+                  Description="Fast local voice typing"
+                  Target="[INSTALLDIR]voice-typing.exe"
+                  WorkingDirectory="INSTALLDIR"
+                  Icon="VoiceTypingIcoRef" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\maceip\voice-typing"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main" Title="voice-typing" Level="1">
+      <ComponentGroupRef Id="MainComponents" />
+    </Feature>
+  </Package>
+</Wix>

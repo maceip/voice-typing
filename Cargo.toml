@@ -7,14 +7,15 @@ members = [
     "rust-platform-windows",
     "rust-ui",
 ]
+default-members = ["rust-ui"]
 resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
 tokio = "1.52.0"
-voice-typing-asr = { version = "0.1.0", path = "rust-asr" }
-voice-typing-core = { version = "0.1.0", path = "rust-core" }
-voice-typing-audio = { version = "0.1.0", path = "rust-audio" }
-voice-typing-ext = { version = "0.1.0", path = "rust-ext" }
-voice-typing-platform-windows = { version = "0.1.0", path = "rust-platform-windows" }
+voice-typing-asr = { version = "0.2.0", path = "rust-asr" }
+voice-typing-core = { version = "0.2.0", path = "rust-core" }
+voice-typing-audio = { version = "0.2.0", path = "rust-audio" }
+voice-typing-ext = { version = "0.2.0", path = "rust-ext" }
+voice-typing-platform-windows = { version = "0.2.0", path = "rust-platform-windows" }
